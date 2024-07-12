@@ -1,0 +1,36 @@
+[
+ {
+  "_liked_by": "[\"Administrator\"]",
+  "default_value": null,
+  "doc_type": "Customer",
+  "docstatus": 0,
+  "doctype": "Property Setter",
+  "doctype_or_field": "DocField",
+  "field_name": "payment_terms",
+  "is_system_generated": 0,
+  "modified": "2023-03-06 11:00:35.719511",
+  "module": null,
+  "name": "Customer-payment_terms-hidden",
+  "property": "hidden",
+  "property_type": "Check",
+  "row_name": null,
+  "value": "1"
+ },
+ {
+  "_liked_by": "[\"Administrator\"]",
+  "default_value": null,
+  "doc_type": "Customer",
+  "docstatus": 0,
+  "doctype": "Property Setter",
+  "doctype_or_field": "DocField",
+  "field_name": "credit_limits",
+  "is_system_generated": 0,
+  "modified": "2023-03-06 11:00:35.967703",
+  "module": null,
+  "name": "Customer-credit_limits-hidden",
+  "property": "hidden",
+  "property_type": "Check",
+  "row_name": null,
+  "value": "1"
+ }
+]

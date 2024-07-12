@@ -1,0 +1,54 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2023-03-04 12:59:27.845782",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "category",
+  "credit_limit_amount",
+  "credit_days",
+  "bypass_credit_limit_check_at_sales_order"
+ ],
+ "fields": [
+  {
+   "fieldname": "category",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Category",
+   "options": "Category"
+  },
+  {
+   "fieldname": "credit_limit_amount",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Credit Limit Amount"
+  },
+  {
+   "default": "0",
+   "fieldname": "bypass_credit_limit_check_at_sales_order",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Bypass Credit Limit Check at Sales Order"
+  },
+  {
+   "fieldname": "credit_days",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Credit Days"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2023-03-17 17:44:36.676666",
+ "modified_by": "Administrator",
+ "module": "Credit Days Customization",
+ "name": "Customer Credit Limit Custom",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

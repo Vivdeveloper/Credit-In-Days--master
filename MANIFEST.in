@@ -1,0 +1,18 @@
+include MANIFEST.in
+include requirements.txt
+include *.json
+include *.md
+include *.py
+include *.txt
+recursive-include credit_days_customization *.css
+recursive-include credit_days_customization *.csv
+recursive-include credit_days_customization *.html
+recursive-include credit_days_customization *.ico
+recursive-include credit_days_customization *.js
+recursive-include credit_days_customization *.json
+recursive-include credit_days_customization *.md
+recursive-include credit_days_customization *.png
+recursive-include credit_days_customization *.py
+recursive-include credit_days_customization *.svg
+recursive-include credit_days_customization *.txt
+recursive-exclude credit_days_customization *.pyc
