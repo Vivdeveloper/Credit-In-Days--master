@@ -6,6 +6,8 @@ import json
 
 
 def submit(self,methods):
+	if not self.category:
+		frappe.throw("Please Select Category")
 	credit_limit_check_at_sales_order = frappe.db.get_value("Customer Credit Limit Custom",{'parent':self.customer,'category':self.category},['bypass_credit_limit_check_at_sales_order','credit_limit_amount'],as_dict=1)
 	if credit_limit_check_at_sales_order:
 		if credit_limit_check_at_sales_order.bypass_credit_limit_check_at_sales_order == 0:
@@ -128,8 +130,7 @@ def submit(self,methods):
 				si.customer = %s and si.outstanding_amount > 0 and si.category = %s
 
 				""",(self.customer,self.category),as_dict = 1)  
-
-		if outstanding_value[0].outstanding_amount > credit_amount_customer:
+		if (outstanding_value[0].outstanding_amount is not None and outstanding_value[0].outstanding_amount ) > credit_amount_customer:
 			if bypass_credit_limit == 0:
 				frappe.throw("Customer Credit Amount limit Exceeds For This Category")	
 
@@ -137,9 +138,17 @@ def submit(self,methods):
 	credit_days_customer = frappe.db.get_value("Customer Credit Limit Custom",{'category':self.category,'parent':self.customer},'credit_days')
 	
 	credit_days_on_so = frappe.db.sql("select DATEDIFF(CURDATE(),so.transaction_date) as date,category from `tabSales Order` so where so.customer = %s and  so.category = %s order by so.transaction_date asc limit 1", (self.customer,self.category), as_dict =1)
-	if credit_days_on_so[0].date > credit_days_customer:
-		if bypass_credit_limit == 0:
-			frappe.throw("Customer Credit Days limit Exceeds For This Category")		
+	# Check if credit_days_on_so and credit_days_customer are not None
+	if credit_days_on_so[0].date is not None and credit_days_customer is not None:
+		if credit_days_on_so[0].date > credit_days_customer:
+			if bypass_credit_limit == 0:
+				frappe.throw("Customer Credit Days limit Exceeds For This Category")	
+	else:
+		if credit_days_customer is None:
+			frappe.throw(_("The Credit Limit Days for the Customer is not set."))
+	
+
+		
 
 
 #For Send mail for customer credit days
