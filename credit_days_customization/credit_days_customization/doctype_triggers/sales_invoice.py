@@ -96,7 +96,7 @@ def on_submit(self,method):
 
 
     # Credit Limit On Days
-    credit_days_data = get_credit_days(self.customer,self.transaction_date,self.category)
+    credit_days_data = get_credit_days(self.customer,self.posting_date,self.category)
     # frappe.msgprint(str(credit_days_data))
     bypass_credit_limit = frappe.db.get_value("Customer Credit Limit Custom",{'parent':self.customer,'category':self.category},'bypass_credit_limit_check_at_sales_order')
     if bypass_credit_limit == 0:
