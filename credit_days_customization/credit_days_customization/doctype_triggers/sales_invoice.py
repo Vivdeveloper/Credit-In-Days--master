@@ -7,7 +7,9 @@ from frappe import _
 import json
 from frappe.utils.user import get_users_with_role
 
-def on_submit(self,method):
+def before_submit(self,method):
+    customer = frappe.get_doc("Customer",self.customer)
+    custom_acc = frappe.db.get_value("Customer Credit Limit Custom",{'parent':self.customer,'category':self.category},'bypass_credit_limit_check_at_sales_order')
     customer_allocation_rate = frappe.db.get_value("Customer",self.customer,'customer_amount_allocation')
     if customer_allocation_rate != 0:
         if customer_allocation_rate < self.rounded_total:
@@ -15,39 +17,44 @@ def on_submit(self,method):
 
     # Validation For Customer Credit Limit On Amount
     credit_amount_customer = frappe.db.get_value("Customer Credit Limit Custom",{'category':self.category,'parent':self.customer},'credit_limit_amount')
-    
-    if credit_amount_customer and not self.is_return:
-        outstanding_value = frappe.db.sql("""
-                select
-                sum(si.outstanding_amount) as outstanding_amount
-                from
-                `tabSales Invoice` si
-                where
-                si.status in ("Partly Paid", "Unpaid", "Overdue")
-                and
-                si.docstatus = 1
-                and
-                si.customer = %s and si.outstanding_amount > 0 and si.category = %s
+    if not custom_acc:
+        if credit_amount_customer and not self.is_return:
+            outstanding_value = frappe.db.sql("""
+                    select
+                    sum(si.outstanding_amount) as outstanding_amount
+                    from
+                    `tabSales Invoice` si
+                    where
+                    si.status in ("Partly Paid", "Unpaid", "Overdue")
+                    and
+                    si.docstatus = 1
+                    and
+                    si.customer = %s and si.outstanding_amount > 0 and si.category = %s
 
-                """,(self.customer,self.category),as_dict = 1)  
+                    """,(self.customer,self.category),as_dict = 1)  
+            if outstanding_value[0].outstanding_amount == None:
+                pass
+            else:
+                if outstanding_value[0].outstanding_amount+self.grand_total> credit_amount_customer:
+                    remaining_value = outstanding_value[0].outstanding_amount +self.grand_total- credit_amount_customer
+                    # frappe.throw(outstanding_value[0].outstanding_amount)
+                    frappe.throw(f"Customer Credit Amount limit ({credit_amount_customer}) exceeds for {self.category} category by Rs {remaining_value}")
+                else:
+                    pass        
 
-        if outstanding_value[0].outstanding_amount > credit_amount_customer:
-            remaining_value = outstanding_value[0].outstanding_amount - credit_amount_customer
-            frappe.throw(f"Customer Credit Amount limit exceeds for this category by Rs {remaining_value}")
-    else:
-        pass        
 
-
-    # Validation For Customer Credit Limit On Days
-    credit_days_customer = frappe.db.get_value("Customer Credit Limit Custom",{'parent': self.customer,'category':self.category}, 'credit_days')
-    
-    if credit_days_customer:
-        credit_days_value = frappe.db.sql("select DATEDIFF(CURDATE(),si.posting_date) as date,category from `tabSales Invoice` si where si.customer = %s and si.outstanding_amount > 0 and si.category = %s and si.status in ('Partly Paid', 'Unpaid', 'Overdue') order by si.posting_date asc limit 1", (self.customer,self.category), as_dict =1)
+        # Validation For Customer Credit Limit On Days
+        credit_days_customer = frappe.db.get_value("Customer Credit Limit Custom",{'parent': self.customer,'category':self.category}, 'credit_days')
         
-        if credit_days_value[0].date > credit_days_customer:
-            frappe.throw("Customer Credit Days limit Exceeds For This Category")
-    else:
-        pass   
+        if credit_days_customer and not self.is_return:
+            credit_days_value = frappe.db.sql("select DATEDIFF(CURDATE(),si.posting_date) as date,category from `tabSales Invoice` si where si.customer = %s and si.outstanding_amount > 0 and si.category = %s and si.status in ('Partly Paid', 'Unpaid', 'Overdue') order by si.posting_date asc limit 1", (self.customer,self.category), as_dict =1)
+            if frappe.db.exists("Sales Invoice", {'customer': self.customer, 'status': 'Overdue'}):
+                print(frappe.db.exists("Sales Invoice", {'customer': self.customer, 'status': 'Overdue'}),self.customer)
+            
+            # if credit_days_value[0].date > credit_days_customer:
+                frappe.throw("Customer Credit Days limit Exceeds For This Category")
+        else:
+            pass   
 
 
     credit_amount_data = get_credit_amount(self.customer,self.category)
@@ -95,12 +102,12 @@ def on_submit(self,method):
                     },
                 )
 
-
+    
     # Credit Limit On Days
     credit_days_data = get_credit_days(self.customer,self.posting_date,self.category)
     # frappe.msgprint(str(credit_days_data))
     bypass_credit_limit = frappe.db.get_value("Customer Credit Limit Custom",{'parent':self.customer,'category':self.category},'bypass_credit_limit_check_at_sales_order')
-    if bypass_credit_limit == 0:
+    if bypass_credit_limit == 0 and not self.is_return:
         if credit_days_data and (int(credit_days_data['pending_invoice_date']) > int(credit_days_data['customer_credit_days'])):
             frappe.msgprint("Credit Limit Days Exceeded for Customer - " + self.customer + " (" + credit_days_data['pending_invoice_date'] + "/" + credit_days_data['customer_credit_days'] + " Days)")
             
