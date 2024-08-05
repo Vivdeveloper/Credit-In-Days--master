@@ -114,7 +114,7 @@ doc_events = {
 		"on_submit": "credit_days_customization.credit_days_customization.override_function.sales_order.submit"
 	},
     "Sales Invoice":{
-		"before_submit":"credit_days_customization.credit_days_customization.doctype_triggers.sales_invoice.before_submit"
+		"on_submit":"credit_days_customization.credit_days_customization.doctype_triggers.sales_invoice.on_submit"
 	},
     "Customer":{
         "validate":"credit_days_customization.credit_days_customization.doctype_triggers.customer.validate"
