@@ -48,13 +48,18 @@ def before_submit(self,method):
         
         if credit_days_customer and not self.is_return:
             credit_days_value = frappe.db.sql("select DATEDIFF(CURDATE(),si.posting_date) as date,category from `tabSales Invoice` si where si.customer = %s and si.outstanding_amount > 0 and si.category = %s and si.status in ('Partly Paid', 'Unpaid', 'Overdue') order by si.posting_date asc limit 1", (self.customer,self.category), as_dict =1)
-            if frappe.db.exists("Sales Invoice", {'customer': self.customer, 'status': 'Overdue'}):
-                print(frappe.db.exists("Sales Invoice", {'customer': self.customer, 'status': 'Overdue'}),self.customer)
-            
-            # if credit_days_value[0].date > credit_days_customer:
-                frappe.throw("Customer Credit Days limit Exceeds For This Category")
-        else:
-            pass   
+            if frappe.db.exists("Sales Invoice", {'customer': self.customer}):
+                credit_days = frappe.get_list('Sales Invoice', filters={'customer': self.customer, 'status': ['in', ['Unpaid', 'Partly Paid', 'Overdue']]}, fields=['posting_date'])
+                
+                for invoice in credit_days:
+                    days_remaining = frappe.utils.date_diff(frappe.utils.today(), invoice.posting_date)
+                    if days_remaining > credit_days_customer:
+                        frappe.throw('Customer Credit Days limit Exceeds For This Category')
+
+            else:
+                days_remaining = frappe.utils.date_diff(frappe.utils.today(), self.posting_date)
+                if days_remaining > credit_days_customer:
+                    frappe.throw('Customer Credit Days limit Exceeds For This Category')
 
 
     credit_amount_data = get_credit_amount(self.customer,self.category)
