@@ -64,48 +64,49 @@ def before_submit(self,method):
 
     credit_amount_data = get_credit_amount(self.customer,self.category)
     bypass_credit_limit = frappe.db.get_value("Customer Credit Limit Custom",{'parent':self.customer,'category':self.category},'bypass_credit_limit_check_at_sales_order')
-    if bypass_credit_limit == 0:
-        if credit_amount_data and flt(credit_amount_data['customer_outstanding_amount']) > flt(credit_amount_data['customer_credit_limit']):
-            frappe.msgprint("Credit Limit Amount Exceeds For Customer-"+self.customer+ self.category + " Limit)")
-
-            # If not authorized person raise exception
-            credit_controller_role = frappe.db.get_single_value("Accounts Settings", "credit_controller")
-            if not credit_controller_role or credit_controller_role not in frappe.get_roles():
-                # form a list of emails for the credit controller users
-                credit_controller_users = get_users_with_role(credit_controller_role or "Sales Master Manager")
-
-                # form a list of emails and names to show to the user
-                credit_controller_users_formatted = [
-                    get_formatted_email(user).replace("<", "(").replace(">", ")")
-                    for user in credit_controller_users
-                ]
-                if not credit_controller_users_formatted:
-                    frappe.throw(
-                        _("Please contact your administrator to extend the credit limit for {0}.").format(self.customer)
+    if not self.is_return:
+        if bypass_credit_limit == 0:
+            if credit_amount_data and flt(credit_amount_data['customer_outstanding_amount']) > flt(credit_amount_data['customer_credit_limit']):
+                frappe.msgprint("Credit Limit Amount Exceeds For Customer-"+self.customer+ self.category + " Limit)")
+    
+                # If not authorized person raise exception
+                credit_controller_role = frappe.db.get_single_value("Accounts Settings", "credit_controller")
+                if not credit_controller_role or credit_controller_role not in frappe.get_roles():
+                    # form a list of emails for the credit controller users
+                    credit_controller_users = get_users_with_role(credit_controller_role or "Sales Master Manager")
+    
+                    # form a list of emails and names to show to the user
+                    credit_controller_users_formatted = [
+                        get_formatted_email(user).replace("<", "(").replace(">", ")")
+                        for user in credit_controller_users
+                    ]
+                    if not credit_controller_users_formatted:
+                        frappe.throw(
+                            _("Please contact your administrator to extend the credit limit for {0}.").format(self.customer)
+                        )
+    
+                    message = """Please contact any of the following users to extend the credit Limit for {0}:
+                        <br><br><ul><li>{1}</li></ul>""".format(
+                        self.customer, "<li>".join(credit_controller_users_formatted)
                     )
-
-                message = """Please contact any of the following users to extend the credit Limit for {0}:
-                    <br><br><ul><li>{1}</li></ul>""".format(
-                    self.customer, "<li>".join(credit_controller_users_formatted)
-                )
-
-                # if the current user does not have permissions to override credit limit,
-                # prompt them to send out an email to the controller users
-                frappe.msgprint(
-                    message,
-                    title="Notify",
-                    raise_exception=1,
-                    primary_action={
-                        "label": "Send Email",
-                        "server_action": "credit_days_customization.credit_days_customization.override_function.sales_order.send_emails_credit_amount",
-                        "args": {
-                            "customer": self.customer,
-                            "customer_pending_payment_amount": credit_amount_data['customer_outstanding_amount'],
-                            "credit_limit_amount": credit_amount_data['customer_credit_limit'],
-                            "credit_controller_users_list": credit_controller_users,
+    
+                    # if the current user does not have permissions to override credit limit,
+                    # prompt them to send out an email to the controller users
+                    frappe.msgprint(
+                        message,
+                        title="Notify",
+                        raise_exception=1,
+                        primary_action={
+                            "label": "Send Email",
+                            "server_action": "credit_days_customization.credit_days_customization.override_function.sales_order.send_emails_credit_amount",
+                            "args": {
+                                "customer": self.customer,
+                                "customer_pending_payment_amount": credit_amount_data['customer_outstanding_amount'],
+                                "credit_limit_amount": credit_amount_data['customer_credit_limit'],
+                                "credit_controller_users_list": credit_controller_users,
+                            },
                         },
-                    },
-                )
+                    )
 
     
     # Credit Limit On Days
