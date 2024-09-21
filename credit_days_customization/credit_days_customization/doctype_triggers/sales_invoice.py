@@ -31,7 +31,7 @@ def before_submit(self,method):
                     and
                     si.customer = %s and si.outstanding_amount > 0 and si.category = %s
 
-                    """,(self.customer,self.category),as_dict = 1)  
+                    """,(self.customer,self.category),as_dict = 1) 
             if outstanding_value[0].outstanding_amount == None:
                 pass
             else:
@@ -49,7 +49,7 @@ def before_submit(self,method):
         if credit_days_customer and not self.is_return:
             credit_days_value = frappe.db.sql("select DATEDIFF(CURDATE(),si.posting_date) as date,category from `tabSales Invoice` si where si.customer = %s and si.outstanding_amount > 0 and si.category = %s and si.status in ('Partly Paid', 'Unpaid', 'Overdue') order by si.posting_date asc limit 1", (self.customer,self.category), as_dict =1)
             if frappe.db.exists("Sales Invoice", {'customer': self.customer}):
-                credit_days = frappe.get_list('Sales Invoice', filters={'customer': self.customer, 'status': ['in', ['Unpaid', 'Partly Paid', 'Overdue']]}, fields=['posting_date'])
+                credit_days = frappe.get_list('Sales Invoice', filters={'customer': self.customer, 'category':self.category,'status': ['in', ['Unpaid', 'Partly Paid', 'Overdue']]}, fields=['posting_date'])
                 
                 for invoice in credit_days:
                     days_remaining = frappe.utils.date_diff(frappe.utils.today(), invoice.posting_date)
